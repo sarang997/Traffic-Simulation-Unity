@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class TestMultipleIntersectionsManager : MonoBehaviour
 {
+    public GameObject carObject; // Assign this in the Inspector
+
     public IntersectionGenerator intersectionPrefab; // Assign in the Inspector
     public int numberOfIntersections = 1; // Total number of intersections you want to generate
     public float distanceBetweenIntersections = 50f; // Distance between the centers of consecutive intersections
@@ -15,7 +17,41 @@ public class TestMultipleIntersectionsManager : MonoBehaviour
     private void Start()
     {
         GenerateAndConnectIntersectionsGrid();
+        AssignInitialTargetWaypoint();
     }
+    private void AssignInitialTargetWaypoint()
+    {
+        if (carObject != null)
+        {
+            CarMovement carMovement = carObject.GetComponent<CarMovement>();
+            if (carMovement != null)
+            {
+                // Use GameObject.Find to locate the waypoint by name
+                GameObject initialWaypointObject = GameObject.Find("Intersection_2_Exit_1");
+
+                if (initialWaypointObject != null)
+                {
+                    Transform initialWaypoint = initialWaypointObject.transform;
+                    carMovement.initialTargetWaypoint = initialWaypoint;
+/*                    carMovement.targetWaypoint = initialWaypoint*//**//*; // Also set targetWaypoint if needed
+*/                    Debug.Log("Initial waypoint assigned to the car by name.");
+                }
+                else
+                {
+                    Debug.LogError("Initial waypoint not found by name.");
+                }
+            }
+            else
+            {
+                Debug.LogError("CarMovement script not found on the car object.");
+            }
+        }
+        else
+        {
+            Debug.LogError("Car object not assigned in TestMultipleIntersectionsManager.");
+        }
+    }
+
 
     private void GenerateAndConnectIntersectionsGrid()
     {

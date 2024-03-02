@@ -72,7 +72,7 @@ public class CarMovement : MonoBehaviour
         if (other.CompareTag("TrafficLight"))
         {
             TrafficLightController trafficLightController = other.GetComponentInParent<TrafficLightController>();
-            if (trafficLightController != null && trafficLightController.currentState == TrafficLightController.LightState.Red)
+            if (trafficLightController != null && trafficLightController.currentState == TrafficLightController.LightState.Red &&  targetWaypoint.GetComponent<EntryWps>() !=null)
             {
                 isStoppedAtLight = true;
             }
