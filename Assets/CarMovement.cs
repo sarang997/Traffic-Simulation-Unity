@@ -7,6 +7,8 @@ public class CarMovement : MonoBehaviour
     public Transform initialTargetWaypoint;
     private Transform targetWaypoint;
     private bool isStoppedAtLight = false;
+    private TrafficLightController waitingAtTrafficLight;
+
 
     private void OnEnable()
     {
@@ -75,6 +77,8 @@ public class CarMovement : MonoBehaviour
             if (trafficLightController != null && trafficLightController.currentState == TrafficLightController.LightState.Red &&  targetWaypoint.GetComponent<EntryWps>() !=null)
             {
                 isStoppedAtLight = true;
+                waitingAtTrafficLight = trafficLightController; // Remember this traffic light
+
             }
         }
     }
@@ -92,8 +96,14 @@ public class CarMovement : MonoBehaviour
         targetWaypoint = exitWps.connectedWaypoints[index];
     }
 
-    void HandleGreenLight()
+void HandleGreenLight(TrafficLightController changedLight)
+{
+    // Resume movement only if the green signal comes from the traffic light we're waiting at
+    if (isStoppedAtLight && changedLight == waitingAtTrafficLight)
     {
-        isStoppedAtLight = false; // Resume movement when the traffic light turns green
+        isStoppedAtLight = false;
+        waitingAtTrafficLight = null; // Clear the reference since we're no longer waiting
     }
+}
+
 }

@@ -9,6 +9,7 @@ public class IntersectionGenerator : MonoBehaviour
     private List<GameObject> exitObjects = new List<GameObject>();
     private int intersectionID; // Added to store the intersection identifier
     public GameObject redLightPrefab; // Assign this in the Unity Editor
+    public GameObject trafficLightManagerPrefab; // Assign your TrafficLightManager prefab in Inspector
 
 
     // Method to set the intersection ID
@@ -77,17 +78,20 @@ public class IntersectionGenerator : MonoBehaviour
             road1 = new Road(entryObjects[0], exitObjects[0]);
             road2 = new Road(entryObjects[1], exitObjects[1]);
             // Instantiate red lights for road1 and road2
-            InstantiateRedLight(road1);
-            InstantiateRedLight(road2);
+            Road[] roadsToLight = new Road[] { road1, road2 };
+
+            // Now pass the array of roads to the modified method
+            InstantiateRedLights(roadsToLight);
         }
         if (position == "top-edge")
         {
             road1 = new Road(entryObjects[0], exitObjects[0]);
             road2 = new Road(entryObjects[1], exitObjects[1]);
             road4 = new Road(entryObjects[2], exitObjects[2]);
-            InstantiateRedLight(road1);
-            InstantiateRedLight(road2);
-            InstantiateRedLight(road4);
+            Road[] roadsToLight = new Road[] { road1, road2, road4 };
+
+            // Now pass the array of roads to the modified method
+            InstantiateRedLights(roadsToLight);
 
 
         }
@@ -95,8 +99,10 @@ public class IntersectionGenerator : MonoBehaviour
         {
             road1 = new Road(entryObjects[0], exitObjects[0]);
             road4 = new Road(entryObjects[1], exitObjects[1]);
-            InstantiateRedLight(road1);
-            InstantiateRedLight(road4);
+            Road[] roadsToLight = new Road[] { road1, road4 };
+
+            // Now pass the array of roads to the modified method
+            InstantiateRedLights(roadsToLight);
 
         }
         if (position == "left-edge")
@@ -104,9 +110,10 @@ public class IntersectionGenerator : MonoBehaviour
             road1 = new Road(entryObjects[0], exitObjects[0]);
             road2 = new Road(entryObjects[1], exitObjects[1]);
             road3 = new Road(entryObjects[2], exitObjects[2]);
-            InstantiateRedLight(road1);
-            InstantiateRedLight(road2);
-            InstantiateRedLight(road3);
+            Road[] roadsToLight = new Road[] { road1, road2, road3 };
+
+            // Now pass the array of roads to the modified method
+            InstantiateRedLights(roadsToLight);
 
         }
         if (position == "right-edge")
@@ -114,9 +121,10 @@ public class IntersectionGenerator : MonoBehaviour
             road1 = new Road(entryObjects[0], exitObjects[0]);
             road3 = new Road(entryObjects[1], exitObjects[1]);
             road4 = new Road(entryObjects[2], exitObjects[2]);
-            InstantiateRedLight(road1);
-            InstantiateRedLight(road3);
-            InstantiateRedLight(road4);
+            Road[] roadsToLight = new Road[] { road1, road3, road4 };
+
+            // Now pass the array of roads to the modified method
+            InstantiateRedLights(roadsToLight);
 
         }
         if (position == "bottom-edge")
@@ -124,24 +132,29 @@ public class IntersectionGenerator : MonoBehaviour
             road2 = new Road(entryObjects[0], exitObjects[0]);
             road3 = new Road(entryObjects[1], exitObjects[1]);
             road4 = new Road(entryObjects[2], exitObjects[2]);
-            InstantiateRedLight(road2);
-            InstantiateRedLight(road3);
-            InstantiateRedLight(road4);
+            Road[] roadsToLight = new Road[] { road2, road3, road4 };
+
+            // Now pass the array of roads to the modified method
+            InstantiateRedLights(roadsToLight);
         }
         if (position == "bottom-left")
         {
             road2 = new Road(entryObjects[0], exitObjects[0]);
             road3 = new Road(entryObjects[1], exitObjects[1]);
-            InstantiateRedLight(road2);
-            InstantiateRedLight(road3);
+            Road[] roadsToLight = new Road[] { road2, road3 };
+
+            // Now pass the array of roads to the modified method
+            InstantiateRedLights(roadsToLight);
 
         }
         if (position == "bottom-right")
         {
             road3 = new Road(entryObjects[0], exitObjects[0]);
             road4 = new Road(entryObjects[1], exitObjects[1]);
-            InstantiateRedLight(road3);
-            InstantiateRedLight(road4);
+            Road[] roadsToLight = new Road[] { road3, road4 };
+
+            // Now pass the array of roads to the modified method
+            InstantiateRedLights(roadsToLight);
 
         }
         if (position == "inside")
@@ -150,10 +163,10 @@ public class IntersectionGenerator : MonoBehaviour
             road2 = new Road(entryObjects[1], exitObjects[1]);
             road3 = new Road(entryObjects[2], exitObjects[2]);
             road4 = new Road(entryObjects[3], exitObjects[3]);
-            InstantiateRedLight(road1);
-            InstantiateRedLight(road2);
-            InstantiateRedLight(road3);
-            InstantiateRedLight(road4);
+            Road[] roadsToLight = new Road[] { road1, road2, road3, road4 };
+
+            // Now pass the array of roads to the modified method
+            InstantiateRedLights(roadsToLight);
 
 
         }
@@ -170,9 +183,13 @@ public class IntersectionGenerator : MonoBehaviour
         // You may need to adjust the logic based on the specific requirements for corners and edges.
     }
 
-    private void InstantiateRedLight(Road road)
+private void InstantiateRedLights(Road[] roads)
+{
+    if (redLightPrefab == null) return; // Safety check
+
+    foreach (Road road in roads)
     {
-        if (redLightPrefab == null) return; // Safety check
+        if (road == null) continue; // Skip if the road is null
 
         Vector3 entryPosition = road.entryWaypoint.transform.position;
         Vector3 exitPosition = road.exitWaypoint.transform.position;
@@ -185,8 +202,22 @@ public class IntersectionGenerator : MonoBehaviour
         Quaternion rotation = Quaternion.LookRotation(direction, Vector3.up);
 
         // Instantiate the red light prefab at the midpoint with the calculated rotation
-        Instantiate(redLightPrefab, midpoint, rotation, transform);
+        GameObject redLightGO = Instantiate(redLightPrefab, midpoint, rotation, transform);
+                TrafficLightController lightController = redLightGO.GetComponent<TrafficLightController>();
+       
+        TrafficLightManager trafficLightManager = GetComponent<TrafficLightManager>();
+
+       if (lightController != null)
+        {
+            trafficLightManager.RegisterTrafficLight(lightController);
+        }
+        else
+        {
+            Debug.LogError("Instantiated Red Light does not have a TrafficLightController component.");
+        }
     }
+}
+
 
 
     void AssignConnectedWaypoints()

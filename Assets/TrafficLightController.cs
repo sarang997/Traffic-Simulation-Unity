@@ -7,7 +7,7 @@ public class TrafficLightController : MonoBehaviour
 {
     public enum LightState { Red, Green }
     private LightState _currentState = LightState.Red; // Default state to red
-    public static event Action OnGreenLightChanged; // Define a static event
+public static event Action<TrafficLightController> OnGreenLightChanged;
 
     public LightState currentState
     {
@@ -18,7 +18,7 @@ public class TrafficLightController : MonoBehaviour
             UpdateLightColor();
             if (_currentState == LightState.Green)
             {
-                OnGreenLightChanged?.Invoke(); // Raise the event when the light turns green
+                OnGreenLightChanged?.Invoke(this); // Raise the event when the light turns green
             }
         }
     }
@@ -38,7 +38,7 @@ public class TrafficLightController : MonoBehaviour
     void Start()
     {
         currentState = LightState.Red; // Initialize state to red
-        StartCoroutine(TrafficLightCycle());
+        // StartCoroutine(TrafficLightCycle());
     }
 
     void UpdateLightColor()
