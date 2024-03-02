@@ -10,7 +10,10 @@ public class CarMovement : MonoBehaviour
     private TrafficLightController waitingAtTrafficLight;
     private float currentSpeed; // The current dynamic speed of the car.
         public float decelerationRate = 1f; // Rate at which the car decelerates.
+public float accelerationRate = 0.2f; // Rate at which the car accelerates.
+private bool isStoppedForObstacle = false;
 
+    public float detectionDistance = 1.0f; // Distance ahead of the car to detect obstacles
 
 
     private void OnEnable()
@@ -29,19 +32,77 @@ public class CarMovement : MonoBehaviour
         currentSpeed = speed; // Start moving at cruising speed initially.
 
     }
+private bool isAccelerating = false;
 
-    void Update()
+void Update()
+{
+    CastAndVisualizeRay();
+
+    if (targetWaypoint != null)
     {
-        if (targetWaypoint != null && !isStoppedAtLight)
+        if (!isStoppedAtLight && !isStoppedForObstacle && !isAccelerating)
         {
             MoveTowardsTarget();
-            Debug.Log("moving");
-
-        }else{
-            Debug.Log("stopping");
-            StopTheCar();
+            Debug.Log("Moving");
+        }
+        else if (isStoppedAtLight || isStoppedForObstacle)
+        {
+            Debug.Log("Stopping");
+            StopTheCar(); // Adjust this method if needed to smoothly decelerate
+        }
+        else if (isAccelerating)
+        {
+            Debug.Log("Accelerating");
+            Accelerate();
         }
     }
+}
+void CastAndVisualizeRay()
+{
+    // Define a vertical offset
+    float verticalOffset = 2.0f; // Adjust this value as needed
+    float forwardOffset = 3f; // How far forward from the center to start the ray
+
+    // Adjust the ray's origin vertically and forward
+    Vector3 rayOrigin = transform.position + Vector3.up * verticalOffset + transform.forward * forwardOffset;
+    Vector3 rayDirection = transform.forward;
+
+
+    // Cast the ray
+    RaycastHit hit;
+    bool isHit = Physics.Raycast(rayOrigin, rayDirection, out hit, detectionDistance);
+
+    // Visualization and detection logic remains the same
+    if (isHit && hit.collider.CompareTag("Car"))
+    {
+        // Draw a red line if the ray hits an object tagged as "Car"
+        Debug.DrawRay(rayOrigin, rayDirection * detectionDistance, Color.red);
+        Debug.Log("Ray hit a car: " + hit.collider.gameObject.name);
+    isStoppedForObstacle = true; // Use the new flag here
+    }
+    else
+    {
+        // Draw a green line if the ray doesn't hit a "Car" tagged object
+        Debug.DrawRay(rayOrigin, rayDirection * detectionDistance, Color.green);
+            isStoppedForObstacle = false; // Use the new flag here
+
+    }
+}
+
+void Accelerate()
+{
+    currentSpeed += accelerationRate * Time.deltaTime;
+    currentSpeed = Mathf.Min(currentSpeed, speed); // Ensure we don't exceed the max speed.
+    
+    if (currentSpeed >= speed)
+    {
+        isAccelerating = false; // Stop accelerating once we reach cruising speed.
+    }
+    
+    // Continue moving towards the target while accelerating.
+    MoveTowardsTarget();
+}
+
 void StopTheCar()
 {
     // Decelerate the car smoothly
@@ -138,13 +199,16 @@ void StopTheCar()
 
 void HandleGreenLight(TrafficLightController changedLight)
 {
-    // Resume movement only if the green signal comes from the traffic light we're waiting at
-    if (isStoppedAtLight && changedLight == waitingAtTrafficLight)
+    if (changedLight == waitingAtTrafficLight)
     {
         isStoppedAtLight = false;
-        waitingAtTrafficLight = null; // Clear the reference since we're no longer waiting
-        currentSpeed = speed;
+        if (!isStoppedForObstacle) // Only start accelerating if there's no obstacle
+        {
+            isAccelerating = true;
+        }
+        waitingAtTrafficLight = null;
     }
 }
+
 
 }
