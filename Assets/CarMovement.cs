@@ -8,6 +8,9 @@ public class CarMovement : MonoBehaviour
     private Transform targetWaypoint;
     private bool isStoppedAtLight = false;
     private TrafficLightController waitingAtTrafficLight;
+    private float currentSpeed; // The current dynamic speed of the car.
+        public float decelerationRate = 1f; // Rate at which the car decelerates.
+
 
 
     private void OnEnable()
@@ -23,6 +26,8 @@ public class CarMovement : MonoBehaviour
     void Start()
     {
         targetWaypoint = initialTargetWaypoint;
+        currentSpeed = speed; // Start moving at cruising speed initially.
+
     }
 
     void Update()
@@ -30,8 +35,43 @@ public class CarMovement : MonoBehaviour
         if (targetWaypoint != null && !isStoppedAtLight)
         {
             MoveTowardsTarget();
+            Debug.Log("moving");
+
+        }else{
+            Debug.Log("stopping");
+            StopTheCar();
         }
     }
+void StopTheCar()
+{
+    // Decelerate the car smoothly
+    if (currentSpeed > 0)
+    {
+        currentSpeed -= decelerationRate * Time.deltaTime;
+    }
+    else
+    {
+        currentSpeed = 0; // Ensure the car doesn't go backward
+    }
+
+    // // Even when stopping, we want the car to face the direction of the target waypoint
+    // if (targetWaypoint != null)
+    // {
+    //     // Calculate direction to the target waypoint
+    //     Vector3 targetDirection = targetWaypoint.position - transform.position;
+    //     targetDirection.y = 0; // Ensure rotation only on the y-axis
+        
+    //     // Rotate towards the target waypoint
+    //     if (targetDirection != Vector3.zero)
+    //     {
+    //         Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+    //         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
+    //     }
+    // }
+
+    // Apply the deceleration to actually stop the car
+    transform.position += transform.forward * currentSpeed * Time.deltaTime;
+}
 
     void MoveTowardsTarget()
     {
@@ -103,6 +143,7 @@ void HandleGreenLight(TrafficLightController changedLight)
     {
         isStoppedAtLight = false;
         waitingAtTrafficLight = null; // Clear the reference since we're no longer waiting
+        currentSpeed = speed;
     }
 }
 
