@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class IntersectionGenerator : MonoBehaviour
 {
-    public int roadLength = 10;
+    public float roadLength = 20f;
     public GameObject waypointPrefab; // Prefab for visualizing waypoints
     private List<GameObject> entryObjects = new List<GameObject>();
     private List<GameObject> exitObjects = new List<GameObject>();
@@ -38,7 +38,7 @@ public class IntersectionGenerator : MonoBehaviour
         // Clear previous entry and exit objects to handle re-initialization
         entryObjects.Clear();
         exitObjects.Clear();
-        Debug.Log($"position: {position}");
+        // Debug.Log($"position: {position}");
         for (int i = 0; i < 4; i++) // Iterate over potential four roads
         {
             // Skip road creation based on position
@@ -54,19 +54,19 @@ public class IntersectionGenerator : MonoBehaviour
 /*            if (position == "inside") continue;
 */
 
-            Debug.Log($"intersectionID: {intersectionID}");
+            // Debug.Log($"intersectionID: {intersectionID}");
             Vector3 roadDirection = Quaternion.Euler(0, i * 90, 0) * Vector3.forward;
             Vector3 roadEnd = transform.position + (roadDirection * roadLength);
 
             // Entry waypoint
-            Vector3 entryPoint = roadEnd + (Quaternion.Euler(0, 90, 0) * roadDirection * 2);
+            Vector3 entryPoint = roadEnd + (Quaternion.Euler(0, 90, 0) * roadDirection * 4);
             GameObject entry = Instantiate(waypointPrefab, entryPoint, Quaternion.identity, transform);
             entry.name = $"Intersection_{intersectionID}_Entry_{i + 1}";
             entry.AddComponent<EntryWps>(); // Attach EntryWps script
             entryObjects.Add(entry);
 
             // Exit waypoint
-            Vector3 exitPoint = roadEnd + (Quaternion.Euler(0, -90, 0) * roadDirection * 2);
+            Vector3 exitPoint = roadEnd + (Quaternion.Euler(0, -90, 0) * roadDirection * 4);
             GameObject exit = Instantiate(waypointPrefab, exitPoint, Quaternion.identity, transform);
             exit.name = $"Intersection_{intersectionID}_Exit_{i + 1}";
             exit.AddComponent<ExitWps>(); // Attach ExitWps script
@@ -170,12 +170,12 @@ public class IntersectionGenerator : MonoBehaviour
 
 
         }
-        Debug.Log($"position: {position}");
+        // Debug.Log($"position: {position}");
 
-        Debug.Log($"road1: {road1.entryWaypoint}");
-        Debug.Log($"road2: { road2.entryWaypoint}");
-        Debug.Log($"road3: {road3.entryWaypoint}");
-        Debug.Log($"road4: {road4.entryWaypoint}");
+        // Debug.Log($"road1: {road1.entryWaypoint}");
+        // Debug.Log($"road2: { road2.entryWaypoint}");
+        // Debug.Log($"road3: {road3.entryWaypoint}");
+        // Debug.Log($"road4: {road4.entryWaypoint}");
 
 
 
@@ -224,7 +224,6 @@ private void InstantiateRedLights(Road[] roads)
     {
         foreach (GameObject entry in entryObjects)
         {
-            Debug.Log($"entryyyyy: {entry}");
             EntryWps entryScript = entry.GetComponent<EntryWps>();
             foreach (GameObject exit in exitObjects)
             {

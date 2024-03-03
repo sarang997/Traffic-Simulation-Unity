@@ -37,12 +37,12 @@ public class TrafficLightManager : MonoBehaviour
             {
                 // Turn one light green at a time
                 light.currentState = TrafficLightController.LightState.Green;
-                Debug.Log($"Turning {light.gameObject.name} green.");
+                // Debug.Log($"Turning {light.gameObject.name} green.");
                 yield return new WaitForSeconds(greenLightDuration);
 
                 // After green phase, ensure this light turns back to red
                 light.currentState = TrafficLightController.LightState.Red;
-                Debug.Log($"Turning {light.gameObject.name} back to red.");
+                // Debug.Log($"Turning {light.gameObject.name} back to red.");
             }
         }
     }

@@ -9,11 +9,12 @@ public class CarMovement : MonoBehaviour
     private bool isStoppedAtLight = false;
     private TrafficLightController waitingAtTrafficLight;
     private float currentSpeed; // The current dynamic speed of the car.
-        public float decelerationRate = 1f; // Rate at which the car decelerates.
 public float accelerationRate = 0.2f; // Rate at which the car accelerates.
 private bool isStoppedForObstacle = false;
+    float detectionDistance = 20f;
+    float forwardOffset = -3f;
+    float verticalOffset = 1f;
 
-    public float detectionDistance = 1.0f; // Distance ahead of the car to detect obstacles
 
 
     private void OnEnable()
@@ -36,58 +37,69 @@ private bool isAccelerating = false;
 
 void Update()
 {
-    CastAndVisualizeRay();
+    // CastAndVisualizeRay();
 
     if (targetWaypoint != null)
     {
         if (!isStoppedAtLight && !isStoppedForObstacle && !isAccelerating)
         {
             MoveTowardsTarget();
-            Debug.Log("Moving");
+            // Debug.Log("Moving");
         }
-        else if (isStoppedAtLight || isStoppedForObstacle)
+        else if (isStoppedAtLight)
         {
             Debug.Log("Stopping");
             StopTheCar(); // Adjust this method if needed to smoothly decelerate
-        }
-        else if (isAccelerating)
+        }else if (isStoppedForObstacle)
         {
-            Debug.Log("Accelerating");
+            Debug.Log("Stopping behind obstacle");
+            StopTheCarBehindObstactle(); // Adjust this method if needed to smoothly decelerate
+        }
+        else if (isAccelerating )
+        {
+            // Debug.Log("Accelerating");
             Accelerate();
         }
     }
 }
 void CastAndVisualizeRay()
 {
-    // Define a vertical offset
-    float verticalOffset = 2.0f; // Adjust this value as needed
-    float forwardOffset = 3f; // How far forward from the center to start the ray
-
-    // Adjust the ray's origin vertically and forward
     Vector3 rayOrigin = transform.position + Vector3.up * verticalOffset + transform.forward * forwardOffset;
-    Vector3 rayDirection = transform.forward;
+    float sphereRadius = 0.5f; // Adjust the radius based on the size of your vehicles and desired detection width
+    Vector3 rayDirection = transform.forward; // The direction of the SphereCast, typically forward from the car
 
-
-    // Cast the ray
     RaycastHit hit;
-    bool isHit = Physics.Raycast(rayOrigin, rayDirection, out hit, detectionDistance);
-
-    // Visualization and detection logic remains the same
+    // Perform the SphereCast
+    bool isHit = Physics.SphereCast(rayOrigin, sphereRadius, rayDirection, out hit, detectionDistance);
     if (isHit && hit.collider.CompareTag("Car"))
     {
-        // Draw a red line if the ray hits an object tagged as "Car"
-        Debug.DrawRay(rayOrigin, rayDirection * detectionDistance, Color.red);
-        Debug.Log("Ray hit a car: " + hit.collider.gameObject.name);
-    isStoppedForObstacle = true; // Use the new flag here
+        // If the SphereCast hits a car, draw a red line from the origin to the hit point and a sphere at the hit point
+        Debug.DrawRay(rayOrigin, rayDirection * hit.distance, Color.red);
+        // Also, visualize the sphere at the point of contact
+        Debug.DrawLine(rayOrigin, hit.point, Color.red); // Optional: Draw a line to the exact hit point
+        Gizmos.color = Color.red; // Set Gizmos color to red to draw the sphere
+        Gizmos.DrawWireSphere(rayOrigin + rayDirection * hit.distance, sphereRadius); // Draw the sphere at the point of hit
+        Debug.Log("SphereCast hit a car: " + hit.collider.gameObject.name);
     }
     else
     {
-        // Draw a green line if the ray doesn't hit a "Car" tagged object
+        // If no car is hit, draw a green line to indicate the SphereCast's path
         Debug.DrawRay(rayOrigin, rayDirection * detectionDistance, Color.green);
-            isStoppedForObstacle = false; // Use the new flag here
-
     }
 }
+
+void OnDrawGizmos()
+{
+    // You might want to visualize the SphereCast's path even when not hitting anything
+    // This code should be outside of the if-statement if you always want to see the sphere in the scene
+    Gizmos.color = Color.green; // Set Gizmos color to green to draw the sphere path
+    Vector3 rayOrigin = transform.position + Vector3.up * verticalOffset + transform.forward * forwardOffset;
+    Vector3 rayDirection = transform.forward; // Assuming the forward direction for visualization
+    Gizmos.DrawWireSphere(rayOrigin + rayDirection * detectionDistance, 0.5f); // Adjust the radius as needed
+}
+
+
+
 
 void Accelerate()
 {
@@ -102,9 +114,41 @@ void Accelerate()
     // Continue moving towards the target while accelerating.
     MoveTowardsTarget();
 }
+void StopTheCarBehindObstactle()
+{
+    float decelarationRateBehindObstacle = 30f;
+    // Decelerate the car smoothly
+    if (currentSpeed > 0)
+    {
+        currentSpeed -= decelarationRateBehindObstacle * Time.deltaTime;
+    }
+    else
+    {
+        currentSpeed = 0; // Ensure the car doesn't go backward
+    }
 
+    // // Even when stopping, we want the car to face the direction of the target waypoint
+    // if (targetWaypoint != null)
+    // {
+    //     // Calculate direction to the target waypoint
+    //     Vector3 targetDirection = targetWaypoint.position - transform.position;
+    //     targetDirection.y = 0; // Ensure rotation only on the y-axis
+        
+    //     // Rotate towards the target waypoint
+    //     if (targetDirection != Vector3.zero)
+    //     {
+    //         Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+    //         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
+    //     }
+    // }
+
+    // Apply the deceleration to actually stop the car
+    transform.position += transform.forward * currentSpeed * Time.deltaTime;
+}
 void StopTheCar()
 {
+    float decelerationRate = 5f; // Rate at which the car decelerates.
+
     // Decelerate the car smoothly
     if (currentSpeed > 0)
     {
@@ -134,23 +178,40 @@ void StopTheCar()
     transform.position += transform.forward * currentSpeed * Time.deltaTime;
 }
 
-    void MoveTowardsTarget()
+void MoveTowardsTarget()
+{
+    if (targetWaypoint == null) return;
+
+    // Move the car towards the target waypoint
+    transform.position = Vector3.MoveTowards(transform.position, targetWaypoint.position, currentSpeed * Time.deltaTime);
+
+    // Determine the direction to the next waypoint
+    Vector3 targetDirection = targetWaypoint.position - transform.position;
+    targetDirection.y = 0; // Ensure rotation only on the y-axis
+
+    // Check if the car is very close to the waypoint
+    if (Vector3.Distance(transform.position, targetWaypoint.position) < 0.1f)
     {
-        transform.position = Vector3.MoveTowards(transform.position, targetWaypoint.position, speed * Time.deltaTime);
+        ChooseNextTarget(); // Update target waypoint to the next one
 
-        Vector3 targetDirection = targetWaypoint.position - transform.position;
-        targetDirection.y = 0; // Ensure rotation only on the y-axis
-        if (targetDirection != Vector3.zero)
+        // Immediately adjust orientation towards the new target waypoint, if available
+        if (targetWaypoint != null)
         {
-            Quaternion lookRotation = Quaternion.LookRotation(targetDirection);
-            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
-        }
-
-        if (Vector3.Distance(transform.position, targetWaypoint.position) < 0.1f)
-        {
-            ChooseNextTarget();
+            targetDirection = targetWaypoint.position - transform.position;
+            targetDirection.y = 0; // Ensure rotation only on the y-axis
+            transform.rotation = Quaternion.LookRotation(targetDirection);
         }
     }
+    else if (targetDirection != Vector3.zero)
+    {
+        // Smoothly turn towards the target waypoint if not yet close
+        Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * 5f);
+    }
+}
+
+
+
 
     void ChooseNextTarget()
     {
@@ -172,17 +233,50 @@ void StopTheCar()
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("TrafficLight"))
+ if (other.CompareTag("Car")) // Make sure the other object has a Car tag
+    {
+            Debug.Log("Another car is too close in front! Decelerating...");
+
+        Vector3 directionToOther = other.transform.position - transform.position;
+        float angleBetween = Vector3.Angle(transform.forward, directionToOther);
+
+        // Check if the other car is within a certain angle in front of this car
+        if (angleBetween < 40) // Adjust this angle as needed
         {
+            isStoppedForObstacle = true;
+        }
+    }
+
+        if (other.CompareTag("TrafficLight"))
+        {   
+            Debug.Log("Traffic light");
             TrafficLightController trafficLightController = other.GetComponentInParent<TrafficLightController>();
             if (trafficLightController != null && trafficLightController.currentState == TrafficLightController.LightState.Red &&  targetWaypoint.GetComponent<EntryWps>() !=null)
             {
                 isStoppedAtLight = true;
+
                 waitingAtTrafficLight = trafficLightController; // Remember this traffic light
 
             }
         }
     }
+    void OnTriggerExit(Collider other)
+{
+    if (other.CompareTag("Car")) // Make sure the other object has a Car tag
+    {
+        Vector3 directionToOther = other.transform.position - transform.position;
+        float angleBetween = Vector3.Angle(transform.forward, directionToOther);
+        // Check if the other car moves out of the specified angle in front of this car
+        if (angleBetween < 90) // Adjust this angle as needed
+        {
+            Debug.Log("Obstacle has moved out of range. Resuming movement...");
+            isStoppedForObstacle = false;
+        isAccelerating = true;
+            // Accelerate();
+
+        }
+    }
+}
 
     // Method adjustments for new waypoint classes
     void ChooseExitRandomly(EntryWps entryWps)

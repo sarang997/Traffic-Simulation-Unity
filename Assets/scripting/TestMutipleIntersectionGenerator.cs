@@ -6,7 +6,6 @@ public class TestMultipleIntersectionsManager : MonoBehaviour
 
     public IntersectionGenerator intersectionPrefab; // Assign in the Inspector
     public int numberOfIntersections = 1; // Total number of intersections you want to generate
-    public float distanceBetweenIntersections = 50f; // Distance between the centers of consecutive intersections
 
     // Keep track of the exit and entry points for drawing Gizmos
     // private GameObject previousExit = null;
@@ -57,6 +56,8 @@ public class TestMultipleIntersectionsManager : MonoBehaviour
     {
         int numberOfRows = 3; // Specify the number of rows
         int numberOfColumns = 3; // Specify the number of columns
+        float distanceBetweenIntersections = 60f; // Distance between the centers of consecutive intersections
+
         IntersectionGenerator[,] grid = new IntersectionGenerator[numberOfRows, numberOfColumns];
 
         for (int row = 0; row < numberOfRows; row++)
