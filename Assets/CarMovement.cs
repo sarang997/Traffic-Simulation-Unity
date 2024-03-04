@@ -267,7 +267,7 @@ void MoveTowardsTarget()
         Vector3 directionToOther = other.transform.position - transform.position;
         float angleBetween = Vector3.Angle(transform.forward, directionToOther);
         // Check if the other car moves out of the specified angle in front of this car
-        if (angleBetween < 90) // Adjust this angle as needed
+        if (angleBetween < 25) // Adjust this angle as needed
         {
             Debug.Log("Obstacle has moved out of range. Resuming movement...");
             isStoppedForObstacle = false;

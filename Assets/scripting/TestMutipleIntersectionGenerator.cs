@@ -26,7 +26,7 @@ public class TestMultipleIntersectionsManager : MonoBehaviour
             if (carMovement != null)
             {
                 // Use GameObject.Find to locate the waypoint by name
-                GameObject initialWaypointObject = GameObject.Find("Intersection_2_Exit_1");
+                GameObject initialWaypointObject = GameObject.Find("Intersection_1_Exit_1");
 
                 if (initialWaypointObject != null)
                 {
@@ -53,40 +53,78 @@ public class TestMultipleIntersectionsManager : MonoBehaviour
 
 
     private void GenerateAndConnectIntersectionsGrid()
+{
+    int numberOfRows = 5; // Specify the number of rows
+    int numberOfColumns = 5; // Specify the number of columns
+    float distanceBetweenIntersections = 60f; // Distance between the centers of consecutive intersections
+
+    IntersectionGenerator[,] grid = new IntersectionGenerator[numberOfRows, numberOfColumns];
+
+    for (int row = 0; row < numberOfRows; row++)
     {
-        int numberOfRows = 3; // Specify the number of rows
-        int numberOfColumns = 3; // Specify the number of columns
-        float distanceBetweenIntersections = 60f; // Distance between the centers of consecutive intersections
-
-        IntersectionGenerator[,] grid = new IntersectionGenerator[numberOfRows, numberOfColumns];
-
-        for (int row = 0; row < numberOfRows; row++)
+        for (int col = 0; col < numberOfColumns; col++)
         {
-            for (int col = 0; col < numberOfColumns; col++)
+            Vector3 newPosition = new Vector3(col * distanceBetweenIntersections, 0, row * distanceBetweenIntersections);
+            IntersectionGenerator newIntersection = Instantiate(intersectionPrefab, newPosition, Quaternion.identity, transform);
+            string position = DetermineIntersectionPosition(row, col, numberOfRows, numberOfColumns);
+
+            newIntersection.Initialize(row * numberOfColumns + col + 1, position);
+            grid[row, col] = newIntersection;
+
+            // Instantiate and configure a car at each intersection
+            SpawnCarAtIntersection(newIntersection);
+
+            // Connect to left neighbor
+            if (col > 0)
             {
-                Vector3 newPosition = new Vector3(col * distanceBetweenIntersections, 0, row * distanceBetweenIntersections);
-                IntersectionGenerator newIntersection = Instantiate(intersectionPrefab, newPosition, Quaternion.identity, transform);
-                string position = DetermineIntersectionPosition(row, col, numberOfRows, numberOfColumns);
+                ConnectIntersections(grid[row, col - 1], newIntersection, road2: true, road4: true);
+            }
 
-                newIntersection.Initialize(row * numberOfColumns + col + 1, position);
-                grid[row, col] = newIntersection;
-
-                // Connect to left neighbor
-                if (col > 0)
-                {
-                    // Assuming road4 is the entry for the current intersection and road2 is the exit for the left neighbor
-                    ConnectIntersections(grid[row, col - 1], newIntersection, road2: true, road4: true);
-                }
-
-                // Connect to top neighbor
-                if (row > 0)
-                {
-                    // Assuming road1 is the entry for the current intersection and road3 is the exit for the top neighbor
-                    ConnectIntersections(grid[row - 1, col], newIntersection, road1: true, road3: true);
-                }
+            // Connect to top neighbor
+            if (row > 0)
+            {
+                ConnectIntersections(grid[row - 1, col], newIntersection, road1: true, road3: true);
             }
         }
     }
+}
+
+private void SpawnCarAtIntersection(IntersectionGenerator intersection)
+{
+    if (carObject != null && intersection != null)
+    {
+        // Assuming the car's initial target waypoint is one of the exit waypoints of the intersection
+        GameObject initialWaypoint = intersection.road1.exitWaypoint; // Example: Use road1's exit as the initial waypoint
+        
+        if (initialWaypoint != null)
+        {
+            // Instantiate the car at the position of the intersection
+            GameObject carInstance = Instantiate(carObject, intersection.transform.position, Quaternion.identity);
+
+            // Assign the initial target waypoint to the car
+            CarMovement carMovement = carInstance.GetComponent<CarMovement>();
+            if (carMovement != null)
+            {
+                carMovement.initialTargetWaypoint = initialWaypoint.transform;
+                // Log or handle the case where the car spawns and knows where to go next
+                Debug.Log("Car spawned at intersection with initial waypoint assigned.");
+            }
+            else
+            {
+                Debug.LogError("CarMovement script not found on the car instance.");
+            }
+        }
+        else
+        {
+            Debug.LogError("Initial waypoint not found within the intersection.");
+        }
+    }
+    else
+    {
+        Debug.LogError("Car prefab or intersection is null.");
+    }
+}
+
     private string DetermineIntersectionPosition(int row, int col, int totalRows, int totalColumns)
     {
         // Corners
