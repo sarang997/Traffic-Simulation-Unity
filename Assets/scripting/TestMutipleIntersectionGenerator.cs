@@ -3,6 +3,7 @@ using UnityEngine;
 public class TestMultipleIntersectionsManager : MonoBehaviour
 {
     public GameObject carObject; // Assign this in the Inspector
+    public GameObject[] carPrefabs; // Assign this in the Inspector with your 4 vehicle types
 
     public IntersectionGenerator intersectionPrefab; // Assign in the Inspector
     public int numberOfIntersections = 1; // Total number of intersections you want to generate
@@ -91,39 +92,53 @@ public class TestMultipleIntersectionsManager : MonoBehaviour
 
 private void SpawnCarAtIntersection(IntersectionGenerator intersection)
 {
-    if (carObject != null && intersection != null)
+    if (carPrefabs.Length > 0 && intersection != null)
     {
-        // Assuming the car's initial target waypoint is one of the exit waypoints of the intersection
-        GameObject initialWaypoint = intersection.road1.exitWaypoint; // Example: Use road1's exit as the initial waypoint
-        
-        if (initialWaypoint != null)
-        {
-            // Instantiate the car at the position of the intersection
-            GameObject carInstance = Instantiate(carObject, intersection.transform.position, Quaternion.identity);
+        // Specify the number of cars you want to spawn at each intersection
+        int carsToSpawn = 3; // For example, spawning 3 cars at each intersection
 
-            // Assign the initial target waypoint to the car
-            CarMovement carMovement = carInstance.GetComponent<CarMovement>();
-            if (carMovement != null)
+        for (int i = 0; i < carsToSpawn; i++)
+        {
+            // Randomly select a car prefab
+            int prefabIndex = Random.Range(0, carPrefabs.Length);
+            GameObject carPrefab = carPrefabs[prefabIndex];
+
+            // Optional: Adjust the spawn position for each car to avoid overlapping
+            Vector3 spawnPosition = intersection.transform.position + new Vector3(i * 2, 0, 0); // Example adjustment
+
+            // Assuming the car's initial target waypoint is one of the exit waypoints of the intersection
+            GameObject initialWaypoint = intersection.road1.exitWaypoint; // You might want to choose different waypoints for each car
+
+            if (initialWaypoint != null)
             {
-                carMovement.initialTargetWaypoint = initialWaypoint.transform;
-                // Log or handle the case where the car spawns and knows where to go next
-                Debug.Log("Car spawned at intersection with initial waypoint assigned.");
+                // Instantiate the car at the adjusted position of the intersection
+                GameObject carInstance = Instantiate(carPrefab, spawnPosition, Quaternion.identity);
+
+                // Assign the initial target waypoint to the car
+                CarMovement carMovement = carInstance.GetComponent<CarMovement>();
+                if (carMovement != null)
+                {
+                    carMovement.initialTargetWaypoint = initialWaypoint.transform;
+                    Debug.Log("Car spawned at intersection with initial waypoint assigned.");
+                }
+                else
+                {
+                    Debug.LogError("CarMovement script not found on the car instance.");
+                }
             }
             else
             {
-                Debug.LogError("CarMovement script not found on the car instance.");
+                Debug.LogError("Initial waypoint not found within the intersection.");
             }
-        }
-        else
-        {
-            Debug.LogError("Initial waypoint not found within the intersection.");
         }
     }
     else
     {
-        Debug.LogError("Car prefab or intersection is null.");
+        Debug.LogError("Car prefabs array is empty or intersection is null.");
     }
 }
+
+
 
     private string DetermineIntersectionPosition(int row, int col, int totalRows, int totalColumns)
     {
