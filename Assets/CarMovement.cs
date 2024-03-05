@@ -9,12 +9,12 @@ public class CarMovement : MonoBehaviour
     private bool isStoppedAtLight = false;
     private TrafficLightController waitingAtTrafficLight;
     private float currentSpeed; // The current dynamic speed of the car.
-public float accelerationRate = 0.2f; // Rate at which the car accelerates.
+public float accelerationRate = 5f; // Rate at which the car accelerates.
 private bool isStoppedForObstacle = false;
     float detectionDistance = 20f;
     float forwardOffset = -3f;
     float verticalOffset = 1f;
-
+    
 
 
     private void OnEnable()
@@ -52,7 +52,7 @@ void Update()
             StopTheCar(); // Adjust this method if needed to smoothly decelerate
         }else if (isStoppedForObstacle)
         {
-            Debug.Log("Stopping behind obstacle");
+                        Debug.Log("Stopping behind obstacle");
             StopTheCarBehindObstactle(); // Adjust this method if needed to smoothly decelerate
         }
         else if (isAccelerating )
@@ -147,7 +147,7 @@ void StopTheCarBehindObstactle()
 }
 void StopTheCar()
 {
-    float decelerationRate = 5f; // Rate at which the car decelerates.
+    float decelerationRate = 15f; // Rate at which the car decelerates.
 
     // Decelerate the car smoothly
     if (currentSpeed > 0)
@@ -241,7 +241,7 @@ void MoveTowardsTarget()
         float angleBetween = Vector3.Angle(transform.forward, directionToOther);
 
         // Check if the other car is within a certain angle in front of this car
-        if (angleBetween < 40) // Adjust this angle as needed
+        if (angleBetween < 15) // Adjust this angle as needed
         {
             isStoppedForObstacle = true;
         }
@@ -267,7 +267,7 @@ void MoveTowardsTarget()
         Vector3 directionToOther = other.transform.position - transform.position;
         float angleBetween = Vector3.Angle(transform.forward, directionToOther);
         // Check if the other car moves out of the specified angle in front of this car
-        if (angleBetween < 25) // Adjust this angle as needed
+        if (angleBetween < 15) // Adjust this angle as needed
         {
             Debug.Log("Obstacle has moved out of range. Resuming movement...");
             isStoppedForObstacle = false;
